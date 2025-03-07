@@ -38,6 +38,8 @@ export default function VerseView({
 }: VerseViewProps) {
   const bgColor = useColorModeValue('gray.50', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const wordByWordBg = useColorModeValue('gray.100', 'gray.600');
+  const tafsirBg = useColorModeValue('white', 'gray.800');
   const [showTafsir, setShowTafsir] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
 
@@ -105,7 +107,7 @@ export default function VerseView({
             templateColumns="repeat(auto-fill, minmax(120px, 1fr))"
             gap={4}
             p={4}
-            bg={useColorModeValue('gray.100', 'gray.600')}
+            bg={wordByWordBg}
             borderRadius="md"
           >
             {verse.wordByWord.map((word, index) => (
@@ -164,7 +166,7 @@ export default function VerseView({
         ))}
 
         {showTafsir && (
-          <VStack align="stretch" spacing={4} mt={4} p={4} bg={useColorModeValue('white', 'gray.800')} borderRadius="md">
+          <VStack align="stretch" spacing={4} mt={4} p={4} bg={tafsirBg} borderRadius="md">
             <Text fontWeight="bold" fontSize="lg">Tafsir</Text>
             
             {selectedTafsirs.en.map((tafsir, index) => (

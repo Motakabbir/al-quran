@@ -125,10 +125,41 @@ export default function QuranReader({ surahNumber, initialVerseNumber = 1 }: Qur
           verses: versesData.verses.map((verse: any) => ({
             number: verse.verse_number,
             text: verse.text_uthmani,
-            words: verse.words,
-            translations: {
-              en: verse.translations.find((t: any) => t.language_name === 'english')?.text || '',
-              bn: verse.translations.find((t: any) => t.language_name === 'bengali')?.text || ''
+            textUthmani: verse.text_uthmani,
+            transliteration: verse.words.map((w: { transliteration?: { text?: string } }) => w.transliteration?.text || '').join(' '),
+            translation: {
+              en: {
+                text: verse.translations?.[0]?.text || '',
+                author: verse.translations?.[0]?.resource_name || 'Unknown'
+              },
+              bn: {
+                text: verse.translations?.[1]?.text || '',
+                author: verse.translations?.[1]?.resource_name || 'Unknown'
+              }
+            },
+            audio: {
+              default: `https://verses.quran.com/${verse.verse_key}.mp3`,
+              recitations: {}
+            },
+            wordByWord: verse.words.map((word: any) => ({
+              text: word.text_uthmani,
+              transliteration: word.transliteration?.text || '',
+              translation: {
+                en: word.translation?.text || '',
+                bn: word.translation?.bn || ''
+              }
+            })),
+            tafsir: {
+              en: {
+                short: '',
+                long: '',
+                author: 'Ibn Kathir'
+              },
+              bn: {
+                short: '',
+                long: '',
+                author: 'Zakaria'
+              }
             }
           }))
         });

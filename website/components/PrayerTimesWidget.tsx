@@ -9,9 +9,9 @@ export const PrayerTimesWidget = () => {
   const [qibla, setQibla] = useState<QiblaInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const qiblaArrowColor = useColorModeValue('primary.500', 'primary.300');
 
   useEffect(() => {
     loadPrayerData();
@@ -160,7 +160,7 @@ export const PrayerTimesWidget = () => {
                     top: '50%',
                     left: '50%',
                     transform: `translate(-50%, -50%) rotate(${qibla.direction}deg)`,
-                    color: useColorModeValue('primary.500', 'primary.300')
+                    color: qiblaArrowColor
                   }}
                 />
               </Box>

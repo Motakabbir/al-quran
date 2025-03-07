@@ -45,10 +45,11 @@ export default function AudioPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (surah) {
+    if (!surah?.number) return;
+    
+    try {
       const formattedSurah = surah.number.toString().padStart(3, '0');
       const formattedVerse = currentVerse.toString().padStart(3, '0');
-      // URL format: https://everyayah.com/data/[reciter_folder]/[surah]_[verse].mp3
       const audioUrl = `https://everyayah.com/data/${selectedReciter}/${formattedSurah}_${formattedVerse}.mp3`;
       
       if (audioRef.current) {
@@ -58,8 +59,18 @@ export default function AudioPlayer({
           audioRef.current.play();
         }
       }
+    } catch (error) {
+      console.error('Error setting up audio:', error);
     }
-  }, [surah, currentVerse, selectedReciter]);
+
+    // Cleanup function
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
+  }, [surah, currentVerse, selectedReciter, isPlaying]);
 
   const handlePlay = () => {
     if (audioRef.current) {
