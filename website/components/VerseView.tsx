@@ -22,6 +22,7 @@ interface VerseViewProps {
     arabic: number;
     translation: number;
   };
+  uiLanguage?: 'en' | 'bn';  // Add UI language prop
 }
 
 const HighlightedWord = motion(Box);
@@ -35,6 +36,7 @@ export default function VerseView({
   selectedTafsirs,
   showWordByWord,
   fontSize,
+  uiLanguage = 'en'  // Default to English
 }: VerseViewProps) {
   const bgColor = useColorModeValue('gray.50', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -42,6 +44,16 @@ export default function VerseView({
   const tafsirBg = useColorModeValue('white', 'gray.800');
   const [showTafsir, setShowTafsir] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
+
+  const labels = {
+    playAudio: uiLanguage === 'bn' ? 'অডিও চালান' : 'Play Audio',
+    pauseAudio: uiLanguage === 'bn' ? 'অডিও থামান' : 'Pause Audio',
+    bookmark: uiLanguage === 'bn' ? 'বুকমার্ক' : 'Bookmark verse',
+    showTafsir: uiLanguage === 'bn' ? 'তাফসীর দেখুন' : 'Show tafsir',
+    readFullTafsir: uiLanguage === 'bn' ? 'পূর্ণ তাফসীর পড়ুন' : 'Read full tafsir',
+    verse: uiLanguage === 'bn' ? 'আয়াত' : 'Verse',
+    tafsir: uiLanguage === 'bn' ? 'তাফসীর' : 'Tafsir'
+  };
 
   return (
     <Box
@@ -67,23 +79,21 @@ export default function VerseView({
           {verse.number}
         </Box>
         <IconButton
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? labels.pauseAudio : labels.playAudio}
           icon={isPlaying ? <PauseIcon width={20} /> : <PlayIcon width={20} />}
           onClick={onPlay}
           variant="ghost"
           colorScheme="primary"
         />
-        {onBookmark && (
-          <IconButton
-            aria-label="Bookmark verse"
-            icon={<BookmarkIcon width={20} />}
-            onClick={onBookmark}
-            variant="ghost"
-            colorScheme="primary"
-          />
-        )}
         <IconButton
-          aria-label="Show tafsir"
+          aria-label={labels.bookmark}
+          icon={<BookmarkIcon width={20} />}
+          onClick={onBookmark}
+          variant="ghost"
+          colorScheme="primary"
+        />
+        <IconButton
+          aria-label={labels.showTafsir}
           icon={<InformationCircleIcon width={20} />}
           onClick={() => setShowTafsir(!showTafsir)}
           variant="ghost"
@@ -130,7 +140,7 @@ export default function VerseView({
                   <Text fontSize="sm">
                     {word.translation.en}
                   </Text>
-                  <Text fontSize="sm">
+                  <Text fontSize="sm" color="purple.600">
                     {word.translation.bn}
                   </Text>
                 </VStack>
@@ -167,7 +177,7 @@ export default function VerseView({
 
         {showTafsir && (
           <VStack align="stretch" spacing={4} mt={4} p={4} bg={tafsirBg} borderRadius="md">
-            <Text fontWeight="bold" fontSize="lg">Tafsir</Text>
+            <Text fontWeight="bold" fontSize="lg">{labels.tafsir}</Text>
             
             {selectedTafsirs.en.map((tafsir, index) => (
               <Box key={`tafsir-en-${index}`}>
@@ -175,7 +185,7 @@ export default function VerseView({
                   {verse.tafsir.en.short}
                 </Text>
                 <Button size="sm" onClick={() => window.open(`/tafsir/${verse.number}?lang=en`, '_blank')}>
-                  Read full tafsir
+                  {labels.readFullTafsir}
                 </Button>
                 <Text fontSize="sm" color="gray.500" mt={1}>
                   — {verse.tafsir.en.author}
@@ -189,7 +199,7 @@ export default function VerseView({
                   {verse.tafsir.bn.short}
                 </Text>
                 <Button size="sm" onClick={() => window.open(`/tafsir/${verse.number}?lang=bn`, '_blank')}>
-                  পূর্ণ তাফসীর পড়ুন
+                  {labels.readFullTafsir}
                 </Button>
                 <Text fontSize="sm" color="gray.500" mt={1}>
                   — {verse.tafsir.bn.author}

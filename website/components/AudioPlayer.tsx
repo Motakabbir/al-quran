@@ -27,6 +27,7 @@ interface AudioPlayerProps {
   selectedReciter: string;
   onReciterChange: (reciterId: string) => void;
   autoPlayNext: boolean;
+  uiLanguage?: 'en' | 'bn';
 }
 
 export default function AudioPlayer({
@@ -38,11 +39,24 @@ export default function AudioPlayer({
   selectedReciter,
   onReciterChange,
   autoPlayNext,
+  uiLanguage = 'en',
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const labels = {
+    play: uiLanguage === 'bn' ? 'চালান' : 'Play',
+    pause: uiLanguage === 'bn' ? 'বিরতি' : 'Pause',
+    stop: uiLanguage === 'bn' ? 'থামান' : 'Stop',
+    previous: uiLanguage === 'bn' ? 'পূর্ববর্তী আয়াত' : 'Previous verse',
+    next: uiLanguage === 'bn' ? 'পরবর্তী আয়াত' : 'Next verse',
+    repeat: uiLanguage === 'bn' ? 'পুনরাবৃত্তি' : 'Repeat',
+    selectReciter: uiLanguage === 'bn' ? 'ক্বারী নির্বাচন করুন' : 'Select reciter',
+    loading: uiLanguage === 'bn' ? 'লোড হচ্ছে...' : 'Loading...',
+    error: uiLanguage === 'bn' ? 'অডিও লোড করতে সমস্যা হয়েছে' : 'Error loading audio',
+  };
 
   useEffect(() => {
     if (!surah?.number) return;
@@ -148,21 +162,21 @@ export default function AudioPlayer({
         </Select>
 
         <IconButton
-          aria-label="Previous verse"
+          aria-label={labels.previous}
           icon={<BackwardIcon className="w-5 h-5" />}
           onClick={handlePrevVerse}
           isDisabled={currentVerse <= 1}
         />
 
         <IconButton
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? labels.pause : labels.play}
           icon={isPlaying ? <PauseIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
           onClick={handlePlay}
           colorScheme="blue"
         />
 
         <IconButton
-          aria-label="Next verse"
+          aria-label={labels.next}
           icon={<ForwardIcon className="w-5 h-5" />}
           onClick={handleNextVerse}
           isDisabled={!surah || currentVerse >= surah.verses.length}

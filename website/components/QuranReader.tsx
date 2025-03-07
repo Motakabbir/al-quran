@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -11,33 +11,19 @@ import {
   IconButton,
   Flex,
   useDisclosure,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  Select,
-  Switch,
-  FormControl,
-  FormLabel,
-  VStack,
   useColorMode,
-  Drawer,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerHeader,
-  DrawerBody,
-  Collapse
+  Collapse,
+  Button,
 } from '@chakra-ui/react';
 import { CogIcon, BookmarkIcon, MoonIcon, SunIcon, ClockIcon } from '@heroicons/react/24/solid';
 import { Verse, Surah, UserPreferences, Reciter, Bookmark } from '../types/quran';
 
-const AudioPlayer = dynamic(() => import('./AudioPlayer').then(mod => mod.default), { 
+const AudioPlayer = dynamic(() => import('./AudioPlayer'), { 
   ssr: false,
   loading: () => <div>Loading audio player...</div>
 });
 
-const VerseView = dynamic(() => import('./VerseView').then(mod => mod.default), { 
+const VerseView = dynamic(() => import('./VerseView'), { 
   ssr: false,
   loading: () => <div>Loading verse...</div>
 });
@@ -47,6 +33,11 @@ const PrayerTimesWidget = dynamic(() => import('./PrayerTimesWidget').then(mod =
   loading: () => <div>Loading prayer times...</div>
 });
 
+const QuranSettingsDrawer = dynamic(() => import('./QuranSettingsDrawer'), {
+  ssr: false,
+  loading: () => <div>Loading settings...</div>
+});
+
 interface QuranReaderProps {
   surahNumber: number;
   initialVerseNumber?: number;
@@ -54,6 +45,7 @@ interface QuranReaderProps {
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'light',
+  uiLanguage: 'en',  // Added default UI language
   fontSize: {
     arabic: 28,
     translation: 16
@@ -77,6 +69,8 @@ const LOCAL_STORAGE_KEYS = {
   BOOKMARKS: 'quran-bookmarks'
 };
 
+const VERSES_PER_PAGE = 10;
+
 export default function QuranReader({ surahNumber, initialVerseNumber = 1 }: QuranReaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -90,6 +84,7 @@ export default function QuranReader({ surahNumber, initialVerseNumber = 1 }: Qur
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [showPrayerTimes, setShowPrayerTimes] = useState(false);
+  const [currentPage, setCurrentPage] = useState(Math.floor((initialVerseNumber - 1) / VERSES_PER_PAGE));
 
   const loadUserPreferences = () => {
     const savedPrefs = localStorage.getItem(LOCAL_STORAGE_KEYS.PREFERENCES);
@@ -238,6 +233,10 @@ export default function QuranReader({ surahNumber, initialVerseNumber = 1 }: Qur
     );
   }
 
+  const startVerse = currentPage * VERSES_PER_PAGE;
+  const endVerse = Math.min((currentPage + 1) * VERSES_PER_PAGE, surah?.verses.length || 0);
+  const totalPages = Math.ceil((surah?.verses.length || 0) / VERSES_PER_PAGE);
+
   return (
     <Flex direction="column" w="full" p={4} gap={6}>
       <Stack direction="row" justify="space-between" mb={8}>
@@ -282,123 +281,73 @@ export default function QuranReader({ surahNumber, initialVerseNumber = 1 }: Qur
 
       <Collapse in={showPrayerTimes}>
         <Box mb={6}>
-          <PrayerTimesWidget />
+          <Suspense fallback={<Text>Loading prayer times...</Text>}>
+            <PrayerTimesWidget />
+          </Suspense>
         </Box>
       </Collapse>
 
-      {surah?.verses.map((verse: Verse) => (
-        <VerseView
-          key={verse.number}
-          verse={verse}
-          isPlaying={currentVerse === verse.number}
-          onPlay={() => setCurrentVerse(verse.number)}
-          onBookmark={handleBookmark}
-          selectedTranslations={preferences.selectedTranslations}
-          selectedTafsirs={preferences.selectedTafsirs}
-          showWordByWord={true}
-          fontSize={preferences.fontSize}
-        />
+      {surah?.verses.slice(startVerse, endVerse).map((verse: Verse) => (
+        <Suspense key={verse.number} fallback={<Text>Loading verse {verse.number}...</Text>}>
+          <VerseView
+            verse={verse}
+            isPlaying={currentVerse === verse.number}
+            onPlay={() => setCurrentVerse(verse.number)}
+            onBookmark={handleBookmark}
+            selectedTranslations={preferences.selectedTranslations}
+            selectedTafsirs={preferences.selectedTafsirs}
+            showWordByWord={true}
+            fontSize={preferences.fontSize}
+            uiLanguage={preferences.uiLanguage}
+          />
+        </Suspense>
       ))}
 
-      <AudioPlayer
-        surah={surah}
-        currentVerse={currentVerse}
-        onVerseChange={handleVerseChange}
-        onWordIndexChange={setCurrentWordIndex}
-        reciters={reciters}
-        selectedReciter={preferences.selectedReciter}
-        onReciterChange={handleReciterChange}
-        autoPlayNext={preferences.autoPlayNext}
-      />
+      <Stack direction="row" justify="center" spacing={2} mt={4}>
+        <Button 
+          onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+          isDisabled={currentPage === 0}
+        >
+          {preferences.uiLanguage === 'bn' ? 'পূর্ববর্তী' : 'Previous'}
+        </Button>
+        <Text alignSelf="center">
+          {preferences.uiLanguage === 'bn' ? 
+            `পৃষ্ঠা ${currentPage + 1} / ${totalPages}` : 
+            `Page ${currentPage + 1} of ${totalPages}`}
+        </Text>
+        <Button 
+          onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+          isDisabled={currentPage === totalPages - 1}
+        >
+          {preferences.uiLanguage === 'bn' ? 'পরবর্তী' : 'Next'}
+        </Button>
+      </Stack>
 
-      <Drawer isOpen={isOpen} onClose={onClose} placement="right">
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerHeader>Settings</DrawerHeader>
-          <DrawerBody>
-            <VStack spacing={4}>
-              <FormControl>
-                <FormLabel>Arabic Font Size</FormLabel>
-                <NumberInput
-                  value={preferences.fontSize.arabic}
-                  onChange={(_: string, value: number) => savePreferences({
-                    fontSize: { ...preferences.fontSize, arabic: value }
-                  })}
-                  min={16}
-                  max={48}
-                >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
+      <Suspense fallback={<Text>Loading audio player...</Text>}>
+        <AudioPlayer
+          surah={surah}
+          currentVerse={currentVerse}
+          onVerseChange={handleVerseChange}
+          onWordIndexChange={setCurrentWordIndex}
+          reciters={reciters}
+          selectedReciter={preferences.selectedReciter}
+          onReciterChange={handleReciterChange}
+          autoPlayNext={preferences.autoPlayNext}
+        />
+      </Suspense>
 
-              <FormControl>
-                <FormLabel>Translation Font Size</FormLabel>
-                <NumberInput
-                  value={preferences.fontSize.translation}
-                  onChange={(_: string, value: number) => savePreferences({
-                    fontSize: { ...preferences.fontSize, translation: value }
-                  })}
-                  min={12}
-                  max={32}
-                >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>English Translation</FormLabel>
-                <Select
-                  value={preferences.selectedTranslations.en[0]}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) => savePreferences({
-                    selectedTranslations: {
-                      ...preferences.selectedTranslations,
-                      en: [e.target.value]
-                    }
-                  })}
-                >
-                  <option value="en.sahih">Sahih International</option>
-                  <option value="en.pickthall">Pickthall</option>
-                  <option value="en.yusufali">Yusuf Ali</option>
-                </Select>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>Bengali Translation</FormLabel>
-                <Select
-                  value={preferences.selectedTranslations.bn[0]}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) => savePreferences({
-                    selectedTranslations: {
-                      ...preferences.selectedTranslations,
-                      bn: [e.target.value]
-                    }
-                  })}
-                >
-                  <option value="bn.bengali">Muhiuddin Khan</option>
-                  <option value="bn.zakaria">Tafsir Ibn Kathir Bangla</option>
-                </Select>
-              </FormControl>
-
-              <FormControl display="flex" alignItems="center">
-                <FormLabel mb={0}>Auto-play Next Verse</FormLabel>
-                <Switch
-                  isChecked={preferences.autoPlayNext}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => savePreferences({
-                    autoPlayNext: e.target.checked
-                  })}
-                />
-              </FormControl>
-            </VStack>
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
+      <Suspense fallback={<Text>Loading settings...</Text>}>
+        <QuranSettingsDrawer 
+          isOpen={isOpen} 
+          onClose={onClose}
+          preferences={preferences}
+          onPreferencesChange={savePreferences}
+          onSurahChange={(newSurahNumber) => {
+            router.push(`/surah/${newSurahNumber}/1`);
+          }}
+          currentSurah={surahNumber}
+        />
+      </Suspense>
     </Flex>
   );
 }

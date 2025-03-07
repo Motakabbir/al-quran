@@ -4,7 +4,7 @@ import { ArrowUpIcon, MapPinIcon, ArrowPathIcon } from '@heroicons/react/24/soli
 import { PrayerTime, QiblaInfo } from '../types/quran';
 import { QuranService } from '../services/quranService';
 
-export const PrayerTimesWidget = () => {
+export const PrayerTimesWidget = ({ uiLanguage = 'en' }: { uiLanguage?: 'en' | 'bn' }) => {
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime | null>(null);
   const [qibla, setQibla] = useState<QiblaInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -12,6 +12,19 @@ export const PrayerTimesWidget = () => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const qiblaArrowColor = useColorModeValue('primary.500', 'primary.300');
+
+  const labels = {
+    prayerTimes: uiLanguage === 'bn' ? 'নামাযের সময়সূচী' : 'Prayer Times',
+    fajr: uiLanguage === 'bn' ? 'ফজর' : 'Fajr',
+    sunrise: uiLanguage === 'bn' ? 'সূর্যোদয়' : 'Sunrise',
+    dhuhr: uiLanguage === 'bn' ? 'যোহর' : 'Dhuhr',
+    asr: uiLanguage === 'bn' ? 'আসর' : 'Asr',
+    maghrib: uiLanguage === 'bn' ? 'মাগরিব' : 'Maghrib',
+    isha: uiLanguage === 'bn' ? 'ইশা' : 'Isha',
+    loading: uiLanguage === 'bn' ? 'লোড হচ্ছে...' : 'Loading...',
+    error: uiLanguage === 'bn' ? 'সময়সূচী লোড করতে সমস্যা হয়েছে' : 'Error loading prayer times',
+    findLocation: uiLanguage === 'bn' ? 'অবস্থান খুঁজুন' : 'Find my location'
+  };
 
   useEffect(() => {
     loadPrayerData();
@@ -94,10 +107,10 @@ export const PrayerTimesWidget = () => {
       shadow="sm"
     >
       {loading ? (
-        <Text>Loading prayer times...</Text>
+        <Text>{labels.loading}</Text>
       ) : error ? (
         <VStack align="stretch" spacing={2}>
-          <Text color="red.500">{error}</Text>
+          <Text color="red.500">{labels.error}</Text>
           <IconButton
             aria-label="Retry loading prayer times"
             icon={<ArrowPathIcon width={20} />}
@@ -108,7 +121,7 @@ export const PrayerTimesWidget = () => {
       ) : (
         <VStack align="stretch" spacing={4}>
           <HStack justify="space-between">
-            <Text fontSize="lg" fontWeight="bold">Prayer Times</Text>
+            <Text fontSize="lg" fontWeight="bold">{labels.prayerTimes}</Text>
             <IconButton
               aria-label="Refresh prayer times"
               icon={<ArrowPathIcon width={20} />}
@@ -128,23 +141,23 @@ export const PrayerTimesWidget = () => {
 
           <VStack align="stretch" spacing={2}>
             <HStack justify="space-between">
-              <Text>Fajr</Text>
+              <Text>{labels.fajr}</Text>
               <Text>{prayerTimes?.fajr}</Text>
             </HStack>
             <HStack justify="space-between">
-              <Text>Dhuhr</Text>
+              <Text>{labels.dhuhr}</Text>
               <Text>{prayerTimes?.dhuhr}</Text>
             </HStack>
             <HStack justify="space-between">
-              <Text>Asr</Text>
+              <Text>{labels.asr}</Text>
               <Text>{prayerTimes?.asr}</Text>
             </HStack>
             <HStack justify="space-between">
-              <Text>Maghrib</Text>
+              <Text>{labels.maghrib}</Text>
               <Text>{prayerTimes?.maghrib}</Text>
             </HStack>
             <HStack justify="space-between">
-              <Text>Isha</Text>
+              <Text>{labels.isha}</Text>
               <Text>{prayerTimes?.isha}</Text>
             </HStack>
           </VStack>

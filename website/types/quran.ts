@@ -71,6 +71,7 @@ export interface Reciter {
 
 export interface UserPreferences {
   theme: 'light' | 'dark';
+  uiLanguage: 'en' | 'bn';  // Added UI language preference
   fontSize: {
     arabic: number;
     translation: number;
